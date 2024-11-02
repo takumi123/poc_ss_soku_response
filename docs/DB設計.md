@@ -1,133 +1,69 @@
-# DB設計
-
-
-
+# データベース設計
 
 ## テーブル一覧
 
-### 1. usersテーブル
-ユーザー情報を管理するテーブル
-
+### companies (会社)
 | カラム名 | 型 | NULL | キー | 説明 |
-|---------|-----|------|------|------|
-| id | uuid | NO | PK | ユーザーID |
-| email | varchar(255) | NO | UQ | メールアドレス |
-| password_hash | varchar(255) | NO | - | パスワードハッシュ |
-| name | varchar(100) | NO | - | ユーザー名 |
-| role | enum | NO | - | 権限(user/admin/company_admin) |
-| company_id | uuid | NO | FK | 所属会社ID |
-| department_id | uuid | YES | FK | 所属部署ID |
-| chatwork_id | varchar(100) | NO | UQ | ChatWorkユーザーID |
-| created_at | timestamp | NO | - | 作成日時 |
-| updated_at | timestamp | NO | - | 更新日時 |
-| deleted_at | timestamp | YES | - | 削除日時 |
+|----------|-----|------|------|------|
+| id | BIGINT | NO | PK | 会社ID |
+| name | VARCHAR(255) | NO | | 会社名 |
+| chatwork_account_id | BIGINT | NO | | 管理者アカウントID |
+| chatwork_account_name | VARCHAR(255) | NO | | 管理者アカウント名 |
+| chatwork_api_key | VARCHAR(255) | NO | | ChatworkのAPIキー |
+| created_at | TIMESTAMP | NO | | 作成日時 |
+| updated_at | TIMESTAMP | NO | | 更新日時 |
 
-### 2. companiesテーブル
-会社情報を管理するテーブル
-
+### rooms (ルーム)
 | カラム名 | 型 | NULL | キー | 説明 |
-|---------|-----|------|------|------|
-| id | uuid | NO | PK | 会社ID |
-| name | varchar(100) | NO | - | 会社名 |
-| business_hours_start | time | NO | - | 営業開始時間 |
-| business_hours_end | time | NO | - | 営業終了時間 |
-| created_at | timestamp | NO | - | 作成日時 |
-| updated_at | timestamp | NO | - | 更新日時 |
-| deleted_at | timestamp | YES | - | 削除日時 |
+|----------|-----|------|------|------|
+| chatwork_room_id | BIGINT | NO | PK | ChatworkのルームID |
+| company_id | BIGINT | NO | FK | 会社ID |
+| name | VARCHAR(255) | NO | | ルーム名 |
+| remind_interval | INT | NO | | リマインド間隔(分) デフォルト180分 |
+| created_at | TIMESTAMP | NO | | 作成日時 |
+| updated_at | TIMESTAMP | NO | | 更新日時 |
 
-### 3. departmentsテーブル
-部署情報を管理するテーブル
-
+### accounts (アカウント)
 | カラム名 | 型 | NULL | キー | 説明 |
-|---------|-----|------|------|------|
-| id | uuid | NO | PK | 部署ID |
-| company_id | uuid | NO | FK | 会社ID |
-| name | varchar(100) | NO | - | 部署名 |
-| created_at | timestamp | NO | - | 作成日時 |
-| updated_at | timestamp | NO | - | 更新日時 |
-| deleted_at | timestamp | YES | - | 削除日時 |
+|----------|-----|------|------|------|
+| chatwork_account_id | BIGINT | NO | PK | ChatworkのアカウントID |
+| company_id | BIGINT | NO | FK | 会社ID |
+| name | VARCHAR(255) | NO | | アカウント名 |
+| created_at | TIMESTAMP | NO | | 作成日時 |
+| updated_at | TIMESTAMP | NO | | 更新日時 |
 
-### 4. messagesテーブル
-ChatWorkメッセージを管理するテーブル
-
+### messages (メッセージ)
 | カラム名 | 型 | NULL | キー | 説明 |
-|---------|-----|------|------|------|
-| id | uuid | NO | PK | メッセージID |
-| chatwork_message_id | varchar(100) | NO | UQ | ChatWorkメッセージID |
-| room_id | uuid | NO | FK | ルームID |
-| sender_id | uuid | NO | FK | 送信者ID |
-| content | text | NO | - | メッセージ内容 |
-| to_users | uuid[] | YES | - | To指定ユーザーID配列 |
-| re_users | uuid[] | YES | - | Re指定ユーザーID配列 |
-| urgency_level | int | NO | - | 緊急度(1-5) |
-| importance_level | int | NO | - | 重要度(1-5) |
-| remind_interval | int | NO | - | リマインド間隔(分) |
-| created_at | timestamp | NO | - | 作成日時 |
-| deleted_at | timestamp | YES | - | 削除日時 |
+|----------|-----|------|------|------|
+| chatwork_message_id | BIGINT | NO | PK | ChatworkのメッセージID |
+| company_id | BIGINT | NO | FK | 会社ID |
+| room_id | BIGINT | NO | FK | ルームID |
+| chatwork_account_id | BIGINT | NO | FK | 送信者のアカウントID |
+| body | TEXT | NO | | メッセージ本文 |
+| send_time | TIMESTAMP | NO | | 送信時刻 |
+| created_at | TIMESTAMP | NO | | 作成日時 |
+| updated_at | TIMESTAMP | NO | | 更新日時 |
 
-### 5. roomsテーブル
-ChatWorkルーム情報を管理するテーブル
-
+### message_relations (メッセージ関係)
 | カラム名 | 型 | NULL | キー | 説明 |
-|---------|-----|------|------|------|
-| id | uuid | NO | PK | ルームID |
-| chatwork_room_id | varchar(100) | NO | UQ | ChatWorkルームID |
-| company_id | uuid | NO | FK | 会社ID |
-| name | varchar(100) | NO | - | ルーム名 |
-| is_enabled | boolean | NO | - | 即レスくん有効フラグ |
-| created_at | timestamp | NO | - | 作成日時 |
-| updated_at | timestamp | NO | - | 更新日時 |
-| deleted_at | timestamp | YES | - | 削除日時 |
+|----------|-----|------|------|------|
+| id | BIGINT | NO | PK | ID |
+| company_id | BIGINT | NO | FK | 会社ID |
+| chatwork_message_id | BIGINT | NO | FK | 対象メッセージID |
+| related_account_id | BIGINT | NO | FK | 関連するアカウントID |
+| related_chatwork_message_id | BIGINT | YES | FK | 返信先メッセージID |
+| type | ENUM('TO','RE') | NO | | 関係タイプ |
+| status | ENUM('UNREPLIED','REPLIED') | NO | | ステータス |
+| created_at | TIMESTAMP | NO | | 作成日時 |
+| updated_at | TIMESTAMP | NO | | 更新日時 |
 
-### 6. responsesテーブル
-メッセージへの返信情報を管理するテーブル
-
+### reminders (リマインド履歴)
 | カラム名 | 型 | NULL | キー | 説明 |
-|---------|-----|------|------|------|
-| id | uuid | NO | PK | 返信ID |
-| message_id | uuid | NO | FK | 元メッセージID |
-| responder_id | uuid | NO | FK | 返信者ID |
-| response_time | interval | NO | - | 返信までの時間 |
-| is_within_time | boolean | NO | - | 期限内返信フラグ |
-| created_at | timestamp | NO | - | 作成日時 |
-
-### 7. remindsテーブル
-リマインド履歴を管理するテーブル
-
-| カラム名 | 型 | NULL | キー | 説明 |
-|---------|-----|------|------|------|
-| id | uuid | NO | PK | リマインドID |
-| message_id | uuid | NO | FK | メッセージID |
-| user_id | uuid | NO | FK | リマインド対象ユーザーID |
-| status | enum | NO | - | ステータス(pending/sent/cancelled) |
-| scheduled_at | timestamp | NO | - | 予定日時 |
-| sent_at | timestamp | YES | - | 送信日時 |
-| created_at | timestamp | NO | - | 作成日時 |
-| updated_at | timestamp | NO | - | 更新日時 |
-
-### 8. user_settingsテーブル
-ユーザー個別設定を管理するテーブル
-
-| カラム名 | 型 | NULL | キー | 説明 |
-|---------|-----|------|------|------|
-| id | uuid | NO | PK | 設定ID |
-| user_id | uuid | NO | FK,UQ | ユーザーID |
-| default_remind_interval | int | NO | - | デフォルトリマインド間隔(分) |
-| notification_enabled | boolean | NO | - | 通知有効フラグ |
-| absence_start | timestamp | YES | - | 不在開始日時 |
-| absence_end | timestamp | YES | - | 不在終了日時 |
-| created_at | timestamp | NO | - | 作成日時 |
-| updated_at | timestamp | NO | - | 更新日時 |
-
-### 9. department_chatwork_settingsテーブル
-部署ごとのChatWork設定を管理するテーブル
-
-| カラム名 | 型 | NULL | キー | 説明 |
-|---------|-----|------|------|------|
-| id | uuid | NO | PK | 設定ID |
-| department_id | uuid | NO | FK,UQ | 部署ID |
-| chatwork_api_token | varchar(255) | NO | - | ChatWork APIトークン |
-| bot_name | varchar(100) | NO | - | 送信BOT名 |
-| created_at | timestamp | NO | - | 作成日時 |
-| updated_at | timestamp | NO | - | 更新日時 |
-
+|----------|-----|------|------|------|
+| id | BIGINT | NO | PK | ID |
+| company_id | BIGINT | NO | FK | 会社ID |
+| message_relation_id | BIGINT | NO | FK | メッセージ関係ID |
+| remind_time | TIMESTAMP | NO | | リマインド送信時刻 |
+| status | ENUM('SCHEDULED','SENT') | NO | | ステータス |
+| created_at | TIMESTAMP | NO | | 作成日時 |
+| updated_at | TIMESTAMP | NO | | 更新日時 |
