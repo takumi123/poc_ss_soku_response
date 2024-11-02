@@ -1,127 +1,129 @@
 # API設計
 
-## APIエンドポイント一覧
+## 1. 認証API
 
-### 認証系API
-#### POST /api/auth/login
-ログイン認証を行うAPI
-- リクエストボディ
-  - email: string (メールアドレス)
-  - password: string (パスワード)
-- レスポンス
-  - token: string (JWTトークン)
-  - user: Object (ユーザー情報)
+### 1.1 ログインAPI
+- エンドポイント: POST /api/v1/login
+- 説明: 管理者アカウントでのログイン認証を行う
+- バッチ実行: なし
+- リクエストボディ:
+  ```json
+  {
+    "email": "string", 
+    "password": "string"
+  }
+  ```
+- レスポンス:
+  ```json
+  {
+    "access_token": "string",
+    "token_type": "Bearer"
+  }
+  ```
 
-#### POST /api/auth/register 
-新規ユーザー登録API
-- リクエストボディ
-  - email: string (メールアドレス)
-  - password: string (パスワード)
-  - name: string (ユーザー名)
-  - company_id: string (会社ID)
-  - chatwork_id: string (ChatWorkユーザーID)
-- レスポンス
-  - user: Object (作成されたユーザー情報)
+## 2. 会社管理API
 
-### ユーザー系API
-#### GET /api/users/me
-ログインユーザー情報取得API
-- レスポンス
-  - user: Object (ユーザー情報)
+### 2.1 会社情報登録API
+- エンドポイント: POST /api/v1/companies
+- 説明: 新規会社の登録を行う
+- バッチ実行: なし
+- リクエストボディ:
+  ```json
+  {
+    "name": "string",
+    "chatwork_api_key": "string"
+  }
+  ```
 
-#### PUT /api/users/me/settings
-ユーザー設定更新API
-- リクエストボディ
-  - default_remind_interval: number (デフォルトリマインド間隔)
-  - notification_enabled: boolean (通知有効フラグ)
-  - absence_start: string (不在開始日時)
-  - absence_end: string (不在終了日時)
-- レスポンス
-  - settings: Object (更新された設定情報)
+### 2.2 会社情報取得API 
+- エンドポイント: GET /api/v1/companies/{company_id}
+- 説明: 登録済み会社の情報を取得する
+- バッチ実行: なし
 
-### メッセージ系API
-#### GET /api/messages/unread
-未返信メッセージ一覧取得API
-- クエリパラメータ
-  - page: number (ページ番号)
-  - limit: number (1ページの件数)
-- レスポンス
-  - messages: Array (メッセージ一覧)
-  - total: number (総件数)
+## 3. ルーム管理API
 
-#### POST /api/messages/analyze
-メッセージ分析API
-- リクエストボディ
-  - content: string (メッセージ内容)
-- レスポンス
-  - urgency_level: number (緊急度)
-  - importance_level: number (重要度)
-  - remind_interval: number (推奨リマインド間隔)
+### 3.1 ルーム一覧取得API
+- エンドポイント: GET /api/v1/companies/{company_id}/rooms
+- 説明: 監視対象ルームの一覧を取得する
+- バッチ実行: あり（1会社5分に1回、300回まで）
 
-### 統計系API
-#### GET /api/stats/personal
-個人の返信統計取得API
-- クエリパラメータ
-  - from: string (集計開始日)
-  - to: string (集計終了日)
-- レスポンス
-  - average_response_time: number (平均返信時間)
-  - response_count: number (返信数)
-  - failed_response_count: number (即レス失敗数)
+### 3.2 ルーム設定更新API
+- エンドポイント: PUT /api/v1/rooms/{room_id}
+- 説明: ルームごとのリマインド設定を更新する
+- バッチ実行: なし
+- リクエストボディ:
+  ```json
+  {
+    "remind_interval": 180 // 分単位 (30/60/180)
+  }
+  ```
 
-### 管理者系API
-#### GET /api/admin/users
-ユーザー一覧取得API
-- クエリパラメータ
-  - page: number (ページ番号)
-  - limit: number (1ページの件数)
-  - department_id: string (部署ID)
-- レスポンス
-  - users: Array (ユーザー一覧)
-  - total: number (総件数)
+## 4. メッセージ管理API
 
-#### GET /api/admin/stats/organization
-組織全体の統計取得API
-- クエリパラメータ
-  - from: string (集計開始日)
-  - to: string (集計終了日)
-- レスポンス
-  - department_stats: Array (部署別統計)
-  - user_stats: Array (ユーザー別統計)
-  - overall_stats: Object (全体統計)
+### 4.1 未返信メッセージ取得API
+- エンドポイント: GET /api/v1/companies/{company_id}/unreplied_messages
+- 説明: リマインド対象の未返信メッセージを取得する
+- バッチ実行: あり（1会社5分に1回、300回まで）
+- クエリパラメータ:
+  - account_id: 対象ユーザーID
+  - room_id: 対象ルームID
 
-### ChatWork連携API
-#### POST /api/chatwork/webhook
-ChatWorkからのWebhook受信API
-- リクエストボディ
-  - webhook_event: Object (Webhookイベント情報)
-- レスポンス
-  - status: string (処理結果)
+### 4.2 メッセージ状態更新API
+- エンドポイント: PUT /api/v1/messages/{message_id}/status
+- 説明: メッセージの返信状態を更新する
+- バッチ実行: あり（1会社5分に1回、300回まで）
+- リクエストボディ:
+  ```json
+  {
+    "status": "REPLIED" // UNREPLIED/REPLIED
+  }
+  ```
 
-#### POST /api/chatwork/remind
-ChatWorkへのリマインド送信API
-- リクエストボディ
-  - room_id: string (ルームID)
-  - user_id: string (ユーザーID)
-  - message_id: string (元メッセージID)
-  - message: string (送信メッセージ)
-- レスポンス
-  - status: string (送信結果)
+## 5. リマインド管理API
 
-#### POST /api/chatwork/message
-ChatWorkへの一般メッセージ送信API
-- リクエストボディ
-  - room_id: string (ルームID)
-  - message: string (送信メッセージ)
-- レスポンス
-  - message_id: string (送信されたメッセージID)
-  - status: string (送信結果)
+### 5.1 リマインド履歴取得API
+- エンドポイント: GET /api/v1/companies/{company_id}/reminders
+- 説明: リマインド送信履歴を取得する
+- バッチ実行: なし
+- クエリパラメータ:
+  - start_date: 開始日
+  - end_date: 終了日
 
-#### GET /api/chatwork/rooms
-ユーザーが参加しているChatWorkルーム一覧取得API
-- レスポンス
-  - rooms: Array (ルーム一覧)
-    - room_id: string (ルームID)
-    - name: string (ルーム名)
-    - type: string (ルーム種別)
-    - role: string (ユーザーの権限)
+### 5.2 リマインド送信API
+- エンドポイント: POST /api/v1/reminders
+- 説明: 指定メッセージに対するリマインドを送信する
+- バッチ実行: あり（1会社5分に1回、300回まで）
+- リクエストボディ:
+  ```json
+  {
+    "message_id": "string",
+    "account_id": "string"
+  }
+  ```
+
+## 6. 統計API
+
+### 6.1 レスポンス統計取得API
+- エンドポイント: GET /api/v1/companies/{company_id}/statistics
+- 説明: 返信時間等の統計情報を取得する
+- バッチ実行: なし
+- クエリパラメータ:
+  - period: 集計期間(daily/weekly/monthly)
+  - account_id: 対象ユーザーID（オプション）
+
+## 注意事項
+
+- 全APIは認証必須
+- レスポンスには適切なHTTPステータスコードを設定
+- エラーレスポンスは以下の形式で統一
+  ```json
+  {
+    "error": {
+      "code": "string",
+      "message": "string"
+    }
+  }
+  ```
+- Chatwork APIの制限(5分/300回)に注意
+- メッセージ取得は100件/回の制限あり
+- バッチ実行のあるAPIは1会社あたり5分間に300回までの実行制限あり
