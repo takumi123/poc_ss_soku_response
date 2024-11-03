@@ -1,0 +1,110 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("POSTGRES_PRISMA_URL") // uses connection pooling
+  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+}
+
+
+model Company {
+  id                   String   @id @default(uuid()) @db.Uuid
+  name                 String   @db.VarChar(255)
+  chatworkAccountId    BigInt?   @map("chatwork_account_id")
+  chatworkAccountName  String?   @map("chatwork_account_name") @db.VarChar(255)
+  chatworkApiKey      String?  @map("chatwork_api_key") @db.VarChar(255)
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+  rooms               Room[]
+  accounts            Account[]
+  messages            Message[]
+  messageRelations    MessageRelation[]
+  reminders           Reminder[]
+
+  @@map("companies")
+}
+
+model Room {
+  chatworkRoomId   BigInt   @id @map("chatwork_room_id")
+  companyId        String   @map("company_id") @db.Uuid
+  name             String   @db.VarChar(255)
+  remindInterval   Int      @default(180) @map("remind_interval")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  company          Company  @relation(fields: [companyId], references: [id])
+  messages         Message[]
+
+  @@map("rooms")
+}
+
+model Account {
+  chatworkAccountId BigInt   @id @map("chatwork_account_id")
+  companyId         String   @map("company_id") @db.Uuid
+  name              String   @db.VarChar(255)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  company           Company  @relation(fields: [companyId], references: [id])
+  messages          Message[]
+  messageRelations  MessageRelation[] @relation("RelatedAccount")
+
+  @@map("accounts")
+}
+
+model Message {
+  chatworkMessageId  BigInt   @id @map("chatwork_message_id")
+  companyId          String   @map("company_id") @db.Uuid
+  roomId             BigInt   @map("room_id")
+  chatworkAccountId  BigInt   @map("chatwork_account_id")
+  body               String   @db.Text
+  sendTime           DateTime @map("send_time")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+  company            Company  @relation(fields: [companyId], references: [id])
+  room               Room     @relation(fields: [roomId], references: [chatworkRoomId])
+  account            Account  @relation(fields: [chatworkAccountId], references: [chatworkAccountId])
+  messageRelations   MessageRelation[] @relation("TargetMessage")
+  relatedMessages    MessageRelation[] @relation("RelatedMessage")
+
+  @@map("messages")
+}
+
+model MessageRelation {
+  id                        String    @id @default(uuid()) @db.Uuid
+  companyId                 String    @map("company_id") @db.Uuid
+  chatworkMessageId         BigInt    @map("chatwork_message_id")
+  relatedAccountId         BigInt    @map("related_account_id")
+  relatedChatworkMessageId BigInt?   @map("related_chatwork_message_id")
+  type                     String    @db.VarChar(2)
+  status                   String    @db.VarChar(9)
+  createdAt                DateTime  @default(now()) @map("created_at")
+  updatedAt                DateTime  @updatedAt @map("updated_at")
+  company                  Company   @relation(fields: [companyId], references: [id])
+  targetMessage            Message   @relation("TargetMessage", fields: [chatworkMessageId], references: [chatworkMessageId])
+  relatedAccount          Account   @relation("RelatedAccount", fields: [relatedAccountId], references: [chatworkAccountId])
+  relatedMessage          Message?  @relation("RelatedMessage", fields: [relatedChatworkMessageId], references: [chatworkMessageId])
+  reminders                Reminder[]
+
+  @@map("message_relations")
+}
+
+model Reminder {
+  id                 String    @id @default(uuid()) @db.Uuid
+  companyId          String    @map("company_id") @db.Uuid
+  messageRelationId  String    @map("message_relation_id") @db.Uuid
+  remindTime         DateTime  @map("remind_time")
+  status             String    @db.VarChar(9)
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+  company            Company   @relation(fields: [companyId], references: [id])
+  messageRelation    MessageRelation @relation(fields: [messageRelationId], references: [id])
+
+  @@map("reminders")
+}
