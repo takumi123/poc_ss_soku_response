@@ -8,6 +8,13 @@ import Link from 'next/link'
 
 async function getRooms() {
   try {
+    // 3時間前と5日前のタイムスタンプを計算
+    const threeHoursAgo = new Date();
+    threeHoursAgo.setHours(threeHoursAgo.getHours() - 3);
+
+    const fiveDaysAgo = new Date();
+    fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
+
     const rooms = await prisma.room.findMany({
       where: {
         companyId: '2ca606b2-56c7-481d-89c2-187b5147f485'
@@ -15,10 +22,30 @@ async function getRooms() {
       select: {
         chatworkRoomId: true,
         name: true,
-        remindInterval: true
+        remindInterval: true,
+        messages: {
+          include: {
+            messageRelations: {
+              where: {
+                status: 'UNREAD',
+                targetMessage: {
+                  sendTime: {
+                    lt: threeHoursAgo,
+                    gt: fiveDaysAgo
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     })
-    return rooms
+
+    return rooms.map(room => ({
+      ...room,
+      unreadCount: Math.floor(room.messages.reduce((acc, message) => 
+        acc + message.messageRelations.length, 0) / 2)
+    }))
   } catch (error) {
     console.error('Error:', error)
     throw new Error('ルーム情報の取得に失敗しました')
@@ -49,6 +76,9 @@ export default async function CompanyRooms() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     リマインド間隔(分)
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    返信必要数
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -66,6 +96,11 @@ export default async function CompanyRooms() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {room.remindInterval || '未設定'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <span className={room.unreadCount > 0 ? "text-red-600 font-bold" : "text-gray-500"}>
+                        {room.unreadCount > 0 ? room.unreadCount : '-'}
+                      </span>
                     </td>
                   </tr>
                 ))}
