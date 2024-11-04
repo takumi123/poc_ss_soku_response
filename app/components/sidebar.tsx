@@ -57,6 +57,16 @@ const Sidebar = () => {
           >
             レポート
           </Link>
+          <Link
+            href="/company/setting"
+            className={`${
+              isActive('/company/setting')
+                ? 'bg-indigo-50 text-indigo-600'
+                : 'text-gray-600 hover:bg-gray-100'
+            } group flex items-center px-3 py-2 text-sm font-medium rounded-md`}
+          >
+            会社設定
+          </Link>
         </nav>
       </div>
     </div>
