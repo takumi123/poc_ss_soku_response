@@ -5,13 +5,6 @@ import Header from '@/app/components/header'
 import Sidebar from '@/app/components/sidebar'
 import Footer from '@/app/components/footer'
 
-type PageProps = {
-  params: {
-    room_id: string
-  }
-  searchParams?: { [key: string]: string | string[] | undefined }
-}
-
 async function getMessages(roomId: string) {
   try {
     const messages = await prisma.message.findMany({
@@ -38,7 +31,12 @@ async function getMessages(roomId: string) {
   }
 }
 
-export default async function ChatRoom({ params }: PageProps) {
+export default async function ChatRoom({
+  params
+}: {
+  params: { room_id: string }
+  searchParams?: { [key: string]: string | string[] | undefined }
+}) {
   const { room_id } = params
   const messages = await getMessages(room_id)
 
