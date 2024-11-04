@@ -9,6 +9,7 @@ type PageProps = {
   params: {
     room_id: string
   }
+  searchParams?: { [key: string]: string | string[] | undefined }
 }
 
 async function getMessages(roomId: string) {
@@ -38,7 +39,8 @@ async function getMessages(roomId: string) {
 }
 
 export default async function ChatRoom({ params }: PageProps) {
-  const messages = await getMessages(params.room_id)
+  const { room_id } = params
+  const messages = await getMessages(room_id)
 
   return (
     <div className="flex flex-col min-h-screen">
