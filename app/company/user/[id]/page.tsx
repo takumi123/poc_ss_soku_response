@@ -82,7 +82,14 @@ function isUnreadAndInTimeRange(message: Message): boolean {
   );
 }
 
-export default async function UserDetail({ params }: { params: { id: string } }) {
+type Props = {
+  params: {
+    id: string;
+  };
+  searchParams?: { [key: string]: string | string[] | undefined };
+}
+
+export default async function UserDetail({ params }: Props) {
   // BigIntに変換してユーザー情報を取得
   const account = await prisma.account.findUnique({
     where: {
