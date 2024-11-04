@@ -67,6 +67,16 @@ const Sidebar = () => {
           >
             会社設定
           </Link>
+          <Link
+            href="/company/run_api"
+            className={`${
+              isActive('/company/run_api')
+                ? 'bg-indigo-50 text-indigo-600'
+                : 'text-gray-600 hover:bg-gray-100'
+            } group flex items-center px-3 py-2 text-sm font-medium rounded-md`}
+          >
+            API更新
+          </Link>
         </nav>
       </div>
     </div>

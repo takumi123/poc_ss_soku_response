@@ -49,6 +49,8 @@ model Account {
   chatworkAccountId BigInt   @id @map("chatwork_account_id")
   companyId         String   @map("company_id") @db.Uuid
   name              String   @db.VarChar(255)
+  image_url         String?  @db.VarChar(255)
+  isMessageTarget   Boolean  @default(false) @map("is_message_target")
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
   company           Company  @relation(fields: [companyId], references: [id])
