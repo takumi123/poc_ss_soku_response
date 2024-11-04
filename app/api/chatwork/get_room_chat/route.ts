@@ -85,25 +85,6 @@ export async function GET() {
                         sendTime: new Date(message.send_time * 1000)
                     }
                 });
-
-                // メンション関係を解析してMessageRelationを作成
-                const mentions = message.body.match(/@\[([^\]]+)\]/g);
-                if (mentions) {
-                    for (const mention of mentions) {
-                        const accountId = mention.match(/@\[([^\]]+)\]/)?.[1].split(' ')[0];
-                        if (accountId) {
-                            await prisma.messageRelation.create({
-                                data: {
-                                    companyId: '2ca606b2-56c7-481d-89c2-187b5147f485',
-                                    chatworkMessageId: BigInt(message.message_id),
-                                    relatedAccountId: BigInt(accountId),
-                                    type: 'MT', // メンション
-                                    status: 'PENDING'
-                                }
-                            });
-                        }
-                    }
-                }
             }
         }
 
