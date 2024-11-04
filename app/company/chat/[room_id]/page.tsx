@@ -31,13 +31,15 @@ async function getMessages(roomId: string) {
   }
 }
 
+type Params = Promise<{ room_id: string }>
+
 export default async function ChatRoom({
   params
 }: {
-  params: { room_id: string }
-  searchParams?: { [key: string]: string | string[] | undefined }
+  params: Params
 }) {
-  const { room_id } = params
+  const resolvedParams = await params
+  const { room_id } = resolvedParams
   const messages = await getMessages(room_id)
 
   return (
