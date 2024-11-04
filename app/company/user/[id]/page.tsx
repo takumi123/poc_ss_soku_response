@@ -83,17 +83,19 @@ function isUnreadAndInTimeRange(message: Message): boolean {
 }
 
 type Props = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
   searchParams?: { [key: string]: string | string[] | undefined };
 }
 
 export default async function UserDetail({ params }: Props) {
+  const { id } = await params;
+
   // BigIntに変換してユーザー情報を取得
   const account = await prisma.account.findUnique({
     where: {
-      chatworkAccountId: BigInt(params.id)
+      chatworkAccountId: BigInt(id)
     }
   });
 
@@ -102,8 +104,8 @@ export default async function UserDetail({ params }: Props) {
     notFound();
   }
 
-  const sentMessages = await getSentMessages(params.id);
-  const receivedMessages = await getReceivedMessages(params.id);
+  const sentMessages = await getSentMessages(id);
+  const receivedMessages = await getReceivedMessages(id);
 
   return (
     <div className="flex flex-col min-h-screen">
